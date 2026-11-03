@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<title>Reading Tracker</title>
+<style>
+  :root{--bg:#f6f5f1;--card:#fff;--ink:#1d2430;--mute:#6b7280;--accent:#1f3a5f;--ok:#2e7d4f;--line:#e5e2da}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.4 -apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:80px}
+  header{position:sticky;top:0;background:var(--accent);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:5}
+  header h1{font-size:18px;margin:0;flex:1}
+  header button{background:none;border:0;color:#fff;font-size:15px}
+  main{padding:12px;max-width:640px;margin:auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .row{display:flex;align-items:center;gap:10px}
+  .grow{flex:1;min-width:0}
+  .mute{color:var(--mute);font-size:14px}
+  .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:8px}
+  .bar>i{display:block;height:100%;background:var(--ok)}
+  button.link{background:none;border:0;color:var(--accent);font-size:15px;padding:6px 0}
+  button.del{background:none;border:0;color:#b42318;font-size:18px;padding:4px 8px}
+  input[type=text]{width:100%;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input[type=checkbox]{width:22px;height:22px;accent-color:var(--ok);flex:none}
+  .done .t{text-decoration:line-through;color:var(--mute)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+  summary{padding:14px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:8px}
+  summary::-webkit-details-marker{display:none}
+  .body{padding:0 14px 12px}
+  .item{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+  .add{display:flex;gap:8px;margin-top:8px}
+  .add button{border:0;background:var(--accent);color:#fff;border-radius:8px;padding:0 16px;font-size:16px}
+  h2{font-size:15px;color:var(--mute);margin:18px 4px 8px;text-transform:uppercase;letter-spacing:.04em}
+  select{font-size:15px;padding:6px;border-radius:8px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header><button id="back" hidden>‹ Back</button><h1 id="title">Everything</h1></header>
+<main id="app"></main>
+<script>
+const KEY='readingTracker.v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"courses":[]}');
+function save(){db.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(db))}
+function exportData(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));
+  a.download='reading-tracker-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function importData(input){
+  const f=input.files[0];if(!f)return;
+  f.text().then(t=>{
+    try{const d=JSON.parse(t);if(!Array.isArray(d.courses))throw 0;
+      if(!confirm('Replace everything in the app with this backup?'))return;
+      db=d;save();render();alert('Backup restored');
+    }catch{alert('That file is not a valid backup')}
+  });
+}
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const WEEKS=[1,2,3,4,5,6,7];
+let view={name:'home'};
+let weekFilter=Number(localStorage.getItem('rt.week')||1);
+const openWeeks=new Set();
+
+const stats=items=>{const d=items.filter(i=>i.done).length;return{d,n:items.length,p:items.length?Math.round(d/items.length*100):0}};
+
+function go(v){view=v;render();scrollTo(0,0)}
+document.getElementById('back').onclick=()=>go({name:'home'});
+
+function render(){
+  const app=document.getElementById('app'),back=document.getElementById('back'),title=document.getElementById('title');
+  if(view.name==='course'){
+    const c=db.courses.find(x=>x.id===view.id);
+    if(!c)return go({name:'home'});
+    back.hidden=false;title.textContent=c.name;app.innerHTML=courseHTML(c);
+  }else{
+    back.hidden=true;title.textContent='Everything';app.innerHTML=homeHTML();
+  }
+}
+
+function homeHTML(){
+  let h='';
+  const w=weekFilter;
+  h+=`<div class="row" style="margin:4px 4px 8px"><h2 style="margin:0;flex:1">To read in week</h2>
+    <select onchange="setWeek(this.value)">${WEEKS.map(x=>`<option value="${x}" ${x==w?'selected':''}>Week ${x}</option>`).join('')}</select></div>`;
+  let any=false;
+  for(const c of db.courses){
+    const todo=c.readings.filter(r=>r.week===w&&!r.done);
+    if(!todo.length)continue;
+    any=true;
+    h+=`<div class="card"><div class="mute" style="font-weight:600">${esc(c.name)}</div>`+
+      todo.map(r=>`<div class="item"><input type="checkbox" onchange="toggle('${c.id}','${r.id}')"><div class="grow t">${esc(r.title)}${r.pages?` <span class="mute">· ${esc(r.pages)}</span>`:''}</div></div>`).join('')+`</div>`;
+  }
+  if(!any)h+=`<div class="card mute">${db.courses.length?'Nothing left for this week 🎉':'Add your first course to get started.'}</div>`;
+  h+=`<h2>Courses</h2>`;
+  for(const c of db.courses){
+    const s=stats(c.readings);
+    h+=`<div class="card" onclick="go({name:'course',id:'${c.id}'})"><div class="row"><div class="grow"><b>${esc(c.name)}</b><div class="mute">${s.d}/${s.n} readings done</div></div><span class="mute">${s.p}% ›</span></div><div class="bar"><i style="width:${s.p}%"></i></div></div>`;
+  }
+  h+=`<div class="add"><input type="text" id="newCourse" placeholder="New course name" onkeydown="if(event.key==='Enter')addCourse()"><button onclick="addCourse()">Add</button></div>`;
+  h+=`<p class="mute" style="text-align:center;margin-top:28px;font-size:12px"><a href="#" onclick="exportData();return false" style="color:inherit">backup</a> · <label style="cursor:pointer;text-decoration:underline">restore<input type="file" accept=".json,application/json" hidden onchange="importData(this)"></label></p>`;
+  return h;
+}
+
+function courseHTML(c){
+  const s=stats(c.readings);
+  let h=`<div class="card"><div class="mute">${s.d}/${s.n} done</div><div class="bar"><i style="width:${s.p}%"></i></div></div>`;
+  for(const w of WEEKS){
+    const items=c.readings.filter(r=>r.week===w),ws=stats(items);
+    const open=openWeeks.has(c.id+w)?'open':'';
+    h+=`<details ${open} ontoggle="trackOpen(this,'${c.id}${w}')"><summary><span>Week ${w}</span><span class="mute">${ws.n?`${ws.d}/${ws.n}`:'–'}</span></summary><div class="body">`;
+    h+=items.map(r=>`<div class="item ${r.done?'done':''}"><input type="checkbox" ${r.done?'checked':''} onchange="toggle('${c.id}','${r.id}')"><div class="grow t">${esc(r.title)}${r.pages?`<div class="mute">${esc(r.pages)}</div>`:''}</div><button class="del" onclick="delReading('${c.id}','${r.id}')">×</button></div>`).join('');
+    h+=`<div class="add"><input type="text" id="t${w}" placeholder="Reading (e.g. Donoghue v Stevenson)" onkeydown="if(event.key==='Enter')addReading('${c.id}',${w})"><button onclick="addReading('${c.id}',${w})">+</button></div>`;
+    h+=`<div class="add"><input type="text" id="p${w}" placeholder="Pages (optional)"></div>`;
+    h+=`</div></details>`;
+  }
+  h+=`<button class="link" style="color:#b42318;margin-top:12px" onclick="delCourse('${c.id}')">Delete course</button>`;
+  return h;
+}
+
+function trackOpen(el,k){el.open?openWeeks.add(k):openWeeks.delete(k)}
+function setWeek(v){weekFilter=Number(v);localStorage.setItem('rt.week',v);render()}
+function addCourse(){const i=document.getElementById('newCourse'),n=i.value.trim();if(!n)return;db.courses.push({id:uid(),name:n,readings:[]});save();render()}
+function delCourse(id){if(!confirm('Delete this course and all its readings?'))return;db.courses=db.courses.filter(c=>c.id!==id);save();go({name:'home'})}
+function addReading(cid,w){
+  const t=document.getElementById('t'+w).value.trim(),p=document.getElementById('p'+w).value.trim();
+  if(!t)return;
+  db.courses.find(c=>c.id===cid).readings.push({id:uid(),week:w,title:t,pages:p,done:false});
+  openWeeks.add(cid+w);save();render();
+}
+function toggle(cid,rid){const r=db.courses.find(c=>c.id===cid).readings.find(r=>r.id===rid);r.done=!r.done;save();render()}
+function delReading(cid,rid){const c=db.courses.find(c=>c.id===cid);c.readings=c.readings.filter(r=>r.id!==rid);save();render()}
+render();
+</script>
+</body>
+</html>

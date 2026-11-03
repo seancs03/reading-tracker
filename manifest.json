@@ -1,0 +1,9 @@
+{
+  "name": "Reading Tracker",
+  "short_name": "Readings",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f5f1",
+  "theme_color": "#1f3a5f",
+  "icons": []
+}
