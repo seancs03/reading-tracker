@@ -1,6 +1,6 @@
 {
-  "name": "Reading Tracker",
-  "short_name": "Readings",
+  "name": "Reading",
+  "short_name": "Reading",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f6f5f1",

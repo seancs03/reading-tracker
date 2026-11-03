@@ -5,14 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f3a5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Reading">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
-<title>Reading Tracker</title>
+<title>Reading</title>
 <style>
   :root{--bg:#f6f5f1;--card:#fff;--ink:#1d2430;--mute:#6b7280;--accent:#1f3a5f;--ok:#2e7d4f;--line:#e5e2da}
   *{box-sizing:border-box}
-  body{margin:0;font:16px/1.4 -apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:80px}
-  header{position:sticky;top:0;background:var(--accent);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:5}
-  header h1{font-size:18px;margin:0;flex:1}
+  html{background:var(--bg);min-height:100%}
+  body{margin:0;font:16px/1.4 -apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;min-height:100dvh;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+  header{position:sticky;top:0;background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:10px;z-index:5}
+  header h1{font-size:20px;line-height:1.2;margin:0}
+  header small{display:block;font-size:13px;opacity:.75;margin-top:2px}
+  header div{flex:1;min-width:0}
   header button{background:none;border:0;color:#fff;font-size:15px}
   main{padding:12px;max-width:640px;margin:auto}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
@@ -38,7 +44,7 @@
 </style>
 </head>
 <body>
-<header><button id="back" hidden>‹ Back</button><h1 id="title">Everything</h1></header>
+<header><button id="back" hidden>‹ Back</button><div><h1 id="title">Reading</h1><small id="sub">Prescribed literature</small></div></header>
 <main id="app"></main>
 <script>
 const KEY='readingTracker.v1';
@@ -79,13 +85,13 @@ function go(v){view=v;render();scrollTo(0,0)}
 document.getElementById('back').onclick=()=>go({name:'home'});
 
 function render(){
-  const app=document.getElementById('app'),back=document.getElementById('back'),title=document.getElementById('title');
+  const app=document.getElementById('app'),back=document.getElementById('back'),title=document.getElementById('title'),sub=document.getElementById('sub');
   if(view.name==='course'){
     const c=db.courses.find(x=>x.id===view.id);
     if(!c)return go({name:'home'});
-    back.hidden=false;title.textContent=c.name;app.innerHTML=courseHTML(c);
+    back.hidden=false;title.textContent=c.name;sub.textContent='Prescribed literature';app.innerHTML=courseHTML(c);
   }else{
-    back.hidden=true;title.textContent='Everything';app.innerHTML=homeHTML();
+    back.hidden=true;title.textContent='Reading';sub.textContent='Prescribed literature';app.innerHTML=homeHTML();
   }
 }
 
