@@ -44,7 +44,7 @@
 </style>
 </head>
 <body>
-<header><button id="back" hidden>‹ Back</button><div><h1 id="title">Reading</h1><small id="sub">Prescribed literature</small></div><button id="refresh" aria-label="Refresh" style="font-size:22px;padding:0 4px">↻</button></header>
+<header><button id="back" hidden>‹ Back</button><div><h1 id="title">Reading</h1></div><button id="refresh" aria-label="Refresh" style="font-size:22px;padding:0 4px">↻</button></header>
 <main id="app"></main>
 <script>
 const KEY='readingTracker.v1';
@@ -86,20 +86,20 @@ document.getElementById('refresh').onclick=()=>location.replace(location.pathnam
 document.getElementById('back').onclick=()=>go({name:'home'});
 
 function render(){
-  const app=document.getElementById('app'),back=document.getElementById('back'),title=document.getElementById('title'),sub=document.getElementById('sub');
+  const app=document.getElementById('app'),back=document.getElementById('back'),title=document.getElementById('title');
   if(view.name==='course'){
     const c=db.courses.find(x=>x.id===view.id);
     if(!c)return go({name:'home'});
-    back.hidden=false;title.textContent=c.name;sub.textContent='Prescribed literature';app.innerHTML=courseHTML(c);
+    back.hidden=false;title.textContent=c.name;app.innerHTML=courseHTML(c);
   }else{
-    back.hidden=true;title.textContent='Reading';sub.textContent='Prescribed literature';app.innerHTML=homeHTML();
+    back.hidden=true;title.textContent='Reading';app.innerHTML=homeHTML();
   }
 }
 
 function homeHTML(){
   let h='';
   const w=weekFilter;
-  h+=`<div class="row" style="margin:4px 4px 8px"><h2 style="margin:0;flex:1">To read in week</h2>
+  h+=`<div class="row" style="margin:4px 4px 8px"><h2 style="margin:0;flex:1">Prescribed literature</h2>
     <select onchange="setWeek(this.value)">${WEEKS.map(x=>`<option value="${x}" ${x==w?'selected':''}>Week ${x}</option>`).join('')}</select></div>`;
   let any=false;
   for(const c of db.courses){
