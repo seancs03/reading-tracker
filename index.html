@@ -38,6 +38,7 @@
   .body{padding:0 14px 12px}
   .item{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
   .add{display:flex;gap:8px;margin-top:8px}
+  #app>.add:last-of-type{margin-top:24px}
   .add button{border:0;background:var(--accent);color:#fff;border-radius:8px;padding:0 16px;font-size:16px}
   h2{font-size:15px;color:var(--mute);margin:18px 4px 8px;text-transform:uppercase;letter-spacing:.04em}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -120,7 +121,7 @@ function homeHTML(){
     const s=stats(c.readings);
     h+=`<div class="card" onclick="go({name:'course',id:'${c.id}'})"><div class="row"><div class="grow"><b>${esc(c.name)}</b><div class="mute">${s.d}/${s.n} readings done</div></div><span class="mute">${s.p}% ›</span></div><div class="bar"><i style="width:${s.p}%"></i></div></div>`;
   }
-  h+=`<div class="add"><input type="text" id="newCourse" placeholder="New course name" onkeydown="if(event.key==='Enter')addCourse()"><button onclick="addCourse()">Add</button></div>`;
+  h+=`<div class="add" style="margin-top:24px"><input type="text" id="newCourse" placeholder="New course name" onkeydown="if(event.key==='Enter')addCourse()"><button onclick="addCourse()">Add</button></div>`;
   h+=`<p class="mute" style="text-align:center;margin-top:28px;font-size:12px"><a href="#" onclick="exportData();return false" style="color:inherit">backup</a> · <label style="cursor:pointer;text-decoration:underline">restore<input type="file" accept=".json,application/json" hidden onchange="importData(this)"></label></p>`;
   return h;
 }
