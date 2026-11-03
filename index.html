@@ -40,6 +40,9 @@
   .add{display:flex;gap:8px;margin-top:8px}
   .add button{border:0;background:var(--accent);color:#fff;border-radius:8px;padding:0 16px;font-size:16px}
   h2{font-size:15px;color:var(--mute);margin:18px 4px 8px;text-transform:uppercase;letter-spacing:.04em}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #refresh.spin{animation:spin .6s ease-in-out}
+  #refresh{display:inline-block}
   select{font-size:15px;padding:6px;border-radius:8px;border:1px solid var(--line)}
 </style>
 </head>
@@ -82,7 +85,9 @@ const ttl=r=>r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener" style
 const stats=items=>{const d=items.filter(i=>i.done).length;return{d,n:items.length,p:items.length?Math.round(d/items.length*100):0}};
 
 function go(v){view=v;render();scrollTo(0,0)}
-document.getElementById('refresh').onclick=()=>location.replace(location.pathname+'?r='+Date.now());
+const rf=document.getElementById('refresh');
+rf.onclick=()=>{rf.classList.add('spin');setTimeout(()=>location.replace(location.pathname+'?r='+Date.now()),600)};
+if(location.search.includes('r=')){rf.classList.add('spin');history.replaceState(null,'',location.pathname)}
 document.getElementById('back').onclick=()=>go({name:'home'});
 
 function render(){
